@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Muster Book - Punch Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { background: #e0f2fe; }
+        .nav-link.active { background: #0891b2; color: white; }
+        
+        /* Muster Book Table Styles */
+        .muster-table {
+            font-size: 11px;
+            border-collapse: collapse;
+        }
+        .muster-table th, .muster-table td {
+            border: 1px solid #374151;
+            padding: 4px 6px;
+            text-align: center;
+        }
+        .muster-table th {
+            background: #1f2937;
+            color: white;
+            font-weight: 600;
+        }
+        .muster-table .name-col {
+            text-align: left;
+            min-width: 140px;
+            max-width: 160px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .muster-table .day-col {
+            width: 24px;
+            min-width: 24px;
+        }
+        .att-p { color: #000; font-weight: 600; }
+        .att-a { color: #dc2626; font-weight: 600; }
+        .att-s { color: #9333ea; font-weight: 500; }
+        .att-h { color: #ea580c; font-weight: 600; }
+        .sunday-col { background: #fef3c7; }
+        .holiday-col { background: #fee2e2; }
+        .designation-header {
+            background: #3b82f6 !important;
+            color: white;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 10px;
+        }
+        
+        /* Extra Hours Table */
+        .extra-table {
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+        .extra-table th, .extra-table td {
+            border: 1px solid #374151;
+            padding: 6px 10px;
+        }
+        .extra-table th {
+            background: #1f2937;
+            color: white;
+        }
+        
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .muster-table { font-size: 9px; }
+            aside { display: none !important; }
+            main { padding: 10px !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg no-print">
+            <div class="p-6 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">⏱️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-gray-800">Punch System</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="/employees" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>👥</span> Employees
+                </a>
+                <a href="/register" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>➕</span> Register New
+                </a>
+                <a href="/calendar" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📅</span> Calendar View
+                </a>
+                <a href="/reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📈</span> Reports
+                </a>
+                <a href="/monthly-report" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg font-medium">
+                    <span>📋</span> Monthly Report
+                </a>
+                <a href="/punch" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📸</span> Punch Terminal
+                </a>
+                <hr class="my-4">
+                <a href="/" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>🏠</span> Home
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6 no-print">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Monthly Muster Book</h1>
+                    <p class="text-gray-500">Attendance register in muster book format</p>
+                </div>
+                <div class="flex gap-3">
+                    <select id="role-filter" class="p-2 border-2 border-gray-200 rounded-lg">
+                        <option value="">All Roles</option>
+                        <option value="housekeeping">🧹 Housekeeping</option>
+                        <option value="security">🛡️ Security</option>
+                    </select>
+                    <input type="month" id="month-selector" class="p-2 border-2 border-gray-200 rounded-lg">
+                    <button onclick="loadReport()" class="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700">
+                        📊 Load Report
+                    </button>
+                    <button onclick="window.print()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                        🖨️ Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Title (for print) -->
+            <div id="report-header" class="text-center mb-4 hidden print:block">
+                <h2 class="text-xl font-bold" id="company-title">Anchor Security Services - KHARGHAR</h2>
+                <p class="font-semibold" id="report-title">Muster Book for the month of October 2025</p>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="text-center py-8 hidden">
+                <div class="animate-spin w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                <p class="text-gray-500">Loading report...</p>
+            </div>
+
+            <!-- Report Container -->
+            <div id="report-container" class="space-y-8">
+                <p class="text-gray-500 text-center py-8">Select a month and click "Load Report" to view the muster book</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Set default month to current month
+        const today = new Date();
+        document.getElementById('month-selector').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        async function loadReport() {
+            const month = document.getElementById('month-selector').value;
+            const role = document.getElementById('role-filter').value;
+            
+            if (!month) {
+                alert('Please select a month');
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('report-container').innerHTML = '';
+
+            try {
+                let url = `/api/monthly-report/${month}`;
+                if (role) {
+                    url += `?role=${role}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderMusterBook(data);
+                } else {
+                    document.getElementById('report-container').innerHTML = 
+                        `<p class="text-red-500 text-center py-8">${data.message}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('report-container').innerHTML = 
+                    '<p class="text-red-500 text-center py-8">Failed to load report</p>';
+            }
+
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        function renderMusterBook(data) {
+            const container = document.getElementById('report-container');
+            const numDays = data.num_days;
+            const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthName = monthNames[data.month_number];
+            const role = document.getElementById('role-filter').value;
+            const roleLabel = role === 'security' ? 'Security' : role === 'housekeeping' ? 'Housekeeping' : 'All Staff';
+            
+            // Update print header
+            document.getElementById('company-title').textContent = `Attendance Report - ${roleLabel}`;
+            document.getElementById('report-title').textContent = `Muster Book for the month of ${monthName} ${data.year}`;
+            document.getElementById('report-header').classList.remove('hidden');
+
+            // Build day headers with Sunday/Holiday marking
+            let dayHeaders = '';
+            let sundayMap = {};
+            let holidayMap = {};
+            
+            for (let d = 1; d <= numDays; d++) {
+                const dateStr = `${data.year}-${String(data.month_number).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dateObj = new Date(data.year, data.month_number - 1, d);
+                const isSunday = dateObj.getDay() === 0;
+                
+                // Check if it's in holidays list
+                const isHoliday = data.month_info.holidays.some(h => h.date === dateStr);
+                
+                sundayMap[d] = isSunday;
+                holidayMap[d] = isHoliday;
+                
+                let colClass = 'day-col';
+                if (isSunday) colClass += ' sunday-col';
+                else if (isHoliday) colClass += ' holiday-col';
+                
+                dayHeaders += `<th class="${colClass}">${d}</th>`;
+            }
+
+            // Muster Book Table
+            let html = `
+                <div class="bg-white rounded-xl shadow p-4 overflow-x-auto">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">📋 Muster Book - ${monthName} ${data.year}</h3>
+                    
+                    <table class="muster-table w-full">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">Sr.N</th>
+                                <th class="name-col">Name</th>
+                                <th style="width: 80px;">Designation</th>
+                                ${dayHeaders}
+                                <th style="width: 45px;">Total</th>
+                                <th style="width: 50px;">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Group by designation
+            const designationOrder = ['High-skilled', 'Skilled', 'Semi-skilled', 'Unskilled'];
+            let srNo = 0;
+
+            for (const designation of designationOrder) {
+                const employees = data.designation_groups[designation];
+                if (!employees || employees.length === 0) continue;
+
+                // Designation header row
+                html += `<tr><td colspan="${numDays + 5}" class="designation-header">${designation}</td></tr>`;
+
+                for (const emp of employees) {
+                    srNo++;
+                    let dayCells = '';
+                    
+                    for (let d = 1; d <= numDays; d++) {
+                        const att = emp.daily_attendance[d];
+                        let cellClass = 'day-col';
+                        let attClass = '';
+                        let symbol = '';
+                        
+                        if (sundayMap[d]) cellClass += ' sunday-col';
+                        else if (holidayMap[d]) cellClass += ' holiday-col';
+                        
+                        if (att) {
+                            symbol = att.status;
+                            if (att.status === 'P') attClass = 'att-p';
+                            else if (att.status === 'A') attClass = 'att-a';
+                            else if (att.status === 'S') attClass = 'att-s';
+                            else if (att.status === 'H') attClass = 'att-h';
+                        }
+                        
+                        dayCells += `<td class="${cellClass}"><span class="${attClass}">${symbol}</span></td>`;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${srNo}</td>
+                            <td class="name-col" title="${emp.emp_name}">${emp.emp_name}</td>
+                            <td>${designation.replace('-', ' ')}</td>
+                            ${dayCells}
+                            <td class="font-bold">${emp.days_present}</td>
+                            <td class="att-a font-bold">${emp.absent_days}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            // Footer row with totals
+            const dailyTotals = {};
+            for (let d = 1; d <= numDays; d++) {
+                dailyTotals[d] = data.employees.filter(e => 
+                    e.daily_attendance[d] && e.daily_attendance[d].status === 'P'
+                ).length;
+            }
+
+            let totalCells = '';
+            for (let d = 1; d <= numDays; d++) {
+                let cellClass = 'day-col';
+                if (sundayMap[d]) cellClass += ' sunday-col';
+                else if (holidayMap[d]) cellClass += ' holiday-col';
+                totalCells += `<td class="${cellClass} font-bold">${dailyTotals[d]}</td>`;
+            }
+
+            html += `
+                        <tr class="bg-gray-100">
+                            <td colspan="3" class="text-right font-bold">Daily Total:</td>
+                            ${totalCells}
+                            <td class="font-bold">${data.consolidated.total_present_days}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="mt-4 flex gap-4 text-sm">
+                    <span><span class="att-p">P</span> = Present</span>
+                    <span><span class="att-a">A</span> = Absent</span>
+                    <span><span class="att-s">S</span> = Sunday/Holiday</span>
+                    <span><span class="att-h">H</span> = Half Day</span>
+                    <span class="ml-4">📅 Working Days: ${data.month_info.working_days}</span>
+                    <span>📆 Sundays: ${data.month_info.sundays}</span>
+                    <span>🎉 Holidays: ${data.month_info.national_holidays}</span>
+                </div>
+            </div>
+            `;
+
+            // Extra Working Hours Table
+            html += `
+                <div class="bg-white rounded-xl shadow p-4 mt-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">⏰ Extra Working Hours for the month of ${monthName} ${data.year}</h3>
+                    
+                    <table class="extra-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">Sr.</th>
+                                <th style="min-width: 180px;">Name</th>
+                                <th style="width: 100px;">Designation</th>
+                                <th style="width: 100px;">Extra Work</th>
+                                <th style="width: 80px;">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            srNo = 0;
+            for (const designation of designationOrder) {
+                const employees = data.designation_groups[designation];
+                if (!employees || employees.length === 0) continue;
+
+                // Designation header
+                html += `<tr><td colspan="5" class="designation-header">${designation}</td></tr>`;
+
+                for (const emp of employees) {
+                    srNo++;
+                    html += `
+                        <tr>
+                            <td class="text-center">${srNo}</td>
+                            <td>${emp.emp_name}</td>
+                            <td class="text-center">${designation}</td>
+                            <td class="text-center font-bold">${emp.overtime_hours}</td>
+                            <td class="text-center att-a font-bold">${emp.absent_days}</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            html += `
+                        <tr class="bg-gray-200 font-bold">
+                            <td colspan="3" class="text-right">Total Hours:</td>
+                            <td class="text-center">${data.consolidated.total_overtime_hours}</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            `;
+
+            // Summary Cards
+            html += `
+                <div class="grid grid-cols-4 gap-4 mt-6 no-print">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-4 rounded-xl text-white">
+                        <p class="text-blue-100 text-sm">Total Employees</p>
+                        <p class="text-3xl font-bold">${data.consolidated.total_employees}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 p-4 rounded-xl text-white">
+                        <p class="text-green-100 text-sm">Total Present Days</p>
+                        <p class="text-3xl font-bold">${data.consolidated.total_present_days}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-4 rounded-xl text-white">
+                        <p class="text-orange-100 text-sm">Total Overtime Hours</p>
+                        <p class="text-3xl font-bold">${data.consolidated.total_overtime_hours}h</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-xl text-white">
+                        <p class="text-red-100 text-sm">Total Absent Days</p>
+                        <p class="text-3xl font-bold">${data.consolidated.total_absent_days}</p>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Auto-load if month is set
+        if (document.getElementById('month-selector').value) {
+            loadReport();
+        }
+    </script>
+</body>
+</html>

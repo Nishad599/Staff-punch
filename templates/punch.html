@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punch In/Out - Face Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+            min-height: 100vh;
+        }
+        .punch-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        .camera-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+        }
+        #video, #canvas {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+        }
+        .btn-punch {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: all 0.3s ease;
+        }
+        .btn-punch:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+        .btn-punch:disabled {
+            background: #9ca3af;
+            transform: none;
+            box-shadow: none;
+        }
+        .time-display {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .status-card {
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        .result-in {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-left: 4px solid #10b981;
+        }
+        .result-out {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 4px solid #f59e0b;
+        }
+        .result-error {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white/10 backdrop-blur-lg border-b border-white/20">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center">
+                    <span class="text-2xl">⏱️</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">Punch Attendance</h1>
+                    <p class="text-cyan-200 text-sm">Staff Time Tracking</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="/login" class="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition">
+                    🔐 Admin
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Time Display -->
+        <div class="text-center mb-8">
+            <div class="time-display" id="current-time">--:--:--</div>
+            <p class="text-cyan-200 text-lg" id="current-date">Loading...</p>
+        </div>
+
+        <!-- Punch Card -->
+        <div class="punch-card p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Face Recognition Punch</h2>
+                <p class="text-gray-500">Position your face in the camera and click "Punch"</p>
+            </div>
+
+            <!-- Camera Section -->
+            <div class="flex flex-col items-center mb-6">
+                <div class="camera-container mb-4">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    
+                    <!-- Face Guide Overlay -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-48 h-60 border-4 border-dashed border-cyan-400/50 rounded-full"></div>
+                    </div>
+                </div>
+
+                <div id="camera-status" class="text-gray-500 text-sm mb-4">
+                    Initializing camera...
+                </div>
+
+                <!-- Punch Button -->
+                <button id="punch-btn" onclick="capturePunch()" disabled
+                        class="btn-punch px-12 py-5 text-white text-xl font-bold rounded-2xl shadow-lg">
+                    📸 PUNCH
+                </button>
+            </div>
+
+            <!-- Result Display -->
+            <div id="result-container" class="hidden">
+                <div id="result-card" class="status-card p-6 rounded-xl">
+                    <div class="flex items-center gap-4">
+                        <div id="result-icon" class="text-5xl"></div>
+                        <div class="flex-1">
+                            <h3 id="result-title" class="text-xl font-bold"></h3>
+                            <p id="result-message" class="text-gray-600"></p>
+                            <div id="result-details" class="mt-2 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Status -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">📊 Today's Status</h3>
+                <div class="grid grid-cols-3 gap-4" id="today-stats">
+                    <div class="bg-green-50 p-4 rounded-xl text-center">
+                        <div class="text-2xl font-bold text-green-600" id="stat-working">-</div>
+                        <div class="text-sm text-green-700">Currently Working</div>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-xl text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="stat-completed">-</div>
+                        <div class="text-sm text-blue-700">Completed</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl text-center">
+                        <div class="text-2xl font-bold text-gray-600" id="stat-pending">-</div>
+                        <div class="text-sm text-gray-700">Not Punched</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">📋 Instructions</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-cyan-100">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">1️⃣</span>
+                    <p>Position your face clearly in the camera frame</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">2️⃣</span>
+                    <p>Click "PUNCH" button to record attendance</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">3️⃣</span>
+                    <p>First punch = IN, Second punch = OUT</p>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl">4️⃣</span>
+                    <p>Standard shift: 9 hours (overtime calculated automatically)</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let cameraReady = false;
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    cameraReady = true;
+                    document.getElementById('camera-status').innerHTML = 
+                        '<span class="text-green-600">✅ Camera ready</span>';
+                    document.getElementById('punch-btn').disabled = false;
+                };
+            } catch (err) {
+                console.error('Camera error:', err);
+                document.getElementById('camera-status').innerHTML = 
+                    '<span class="text-red-600">❌ Camera access denied. Please allow camera access.</span>';
+            }
+        }
+
+        // Capture and send punch
+        async function capturePunch() {
+            if (!cameraReady) return;
+
+            const btn = document.getElementById('punch-btn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Processing...';
+
+            // Capture frame
+            ctx.drawImage(video, 0, 0);
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+            try {
+                const response = await fetch('/api/punch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_data: imageData })
+                });
+
+                const result = await response.json();
+                displayResult(result);
+                loadTodayStats();
+
+            } catch (error) {
+                displayResult({
+                    success: false,
+                    message: 'Network error: ' + error.message
+                });
+            }
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '📸 PUNCH';
+            }, 2000);
+        }
+
+        // Display punch result
+        function displayResult(result) {
+            const container = document.getElementById('result-container');
+            const card = document.getElementById('result-card');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const message = document.getElementById('result-message');
+            const details = document.getElementById('result-details');
+
+            container.classList.remove('hidden');
+
+            if (result.success) {
+                if (result.punch_type === 'IN') {
+                    card.className = 'status-card p-6 rounded-xl result-in';
+                    icon.textContent = '✅';
+                    title.textContent = `Welcome, ${result.emp_name}!`;
+                    message.textContent = result.message;
+                    details.innerHTML = `
+                        <span class="inline-block bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            PUNCH IN @ ${result.time}
+                        </span>
+                        <span class="text-gray-500 ml-2">Confidence: ${result.confidence}%</span>
+                    `;
+                } else {
+                    card.className = 'status-card p-6 rounded-xl result-out';
+                    icon.textContent = '👋';
+                    title.textContent = `Goodbye, ${result.emp_name}!`;
+                    message.textContent = result.message;
+                    details.innerHTML = `
+                        <span class="inline-block bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            PUNCH OUT @ ${result.time}
+                        </span>
+                        <div class="mt-2 grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-white/50 p-2 rounded-lg">
+                                <div class="font-bold text-gray-800">${result.total_hours}h</div>
+                                <div class="text-xs text-gray-600">Total</div>
+                            </div>
+                            <div class="bg-white/50 p-2 rounded-lg">
+                                <div class="font-bold text-blue-600">${result.regular_hours}h</div>
+                                <div class="text-xs text-gray-600">Regular</div>
+                            </div>
+                            <div class="bg-white/50 p-2 rounded-lg">
+                                <div class="font-bold text-orange-600">${result.overtime_hours}h</div>
+                                <div class="text-xs text-gray-600">Overtime</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                card.className = 'status-card p-6 rounded-xl result-error';
+                icon.textContent = '❌';
+                title.textContent = 'Punch Failed';
+                message.textContent = result.message;
+                details.innerHTML = result.already_completed ? 
+                    '<span class="text-amber-600">You have already completed today\'s shift.</span>' : '';
+            }
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 10000);
+        }
+
+        // Load today's stats
+        async function loadTodayStats() {
+            try {
+                const response = await fetch('/api/attendance/today');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stat-working').textContent = data.punched_in;
+                    document.getElementById('stat-completed').textContent = data.completed;
+                    document.getElementById('stat-pending').textContent = data.not_punched;
+                }
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('en-US', { hour12: true });
+            document.getElementById('current-date').textContent = 
+                now.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+        }
+
+        // Initialize
+        initCamera();
+        updateTime();
+        setInterval(updateTime, 1000);
+        loadTodayStats();
+        setInterval(loadTodayStats, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>

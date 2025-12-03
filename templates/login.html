@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punch Attendance System - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            background: linear-gradient(135deg, #0e7490, #155e75);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(8, 145, 178, 0.3);
+        }
+        .input-field {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #0891b2;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo/Header -->
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <span class="text-4xl">⏱️</span>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Punch Attendance</h1>
+            <p class="text-cyan-200">Staff Time Tracking System</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="login-card p-8">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Admin Login</h2>
+                <p class="text-gray-500 mt-1">Enter your credentials to continue</p>
+            </div>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                    <input type="text" id="username" 
+                           class="input-field w-full p-4 rounded-xl" 
+                           placeholder="Enter username" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" 
+                           class="input-field w-full p-4 rounded-xl" 
+                           placeholder="Enter password" required>
+                </div>
+
+                <button type="submit" class="btn-login w-full text-white py-4 rounded-xl font-semibold text-lg">
+                    🔓 Login
+                </button>
+            </form>
+
+            <div id="login-status" class="mt-4 text-center text-sm"></div>
+
+            <!-- Quick Access -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <p class="text-center text-gray-500 text-sm mb-4">Quick Access</p>
+                <a href="/punch" class="block w-full text-center py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 font-medium transition">
+                    📸 Go to Punch Terminal
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-cyan-300 text-sm mt-6">
+            © 2025 Punch Attendance System
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const statusEl = document.getElementById('login-status');
+
+            try {
+                statusEl.innerHTML = '<span class="text-cyan-600">Logging in...</span>';
+                
+                const response = await fetch('/api/admin-login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusEl.innerHTML = '<span class="text-green-600">✅ ' + result.message + '</span>';
+                    setTimeout(() => {
+                        window.location.href = result.redirect_url || '/dashboard';
+                    }, 500);
+                } else {
+                    statusEl.innerHTML = '<span class="text-red-600">❌ ' + result.message + '</span>';
+                }
+            } catch (error) {
+                statusEl.innerHTML = '<span class="text-red-600">❌ Login failed: ' + error.message + '</span>';
+            }
+        });
+    </script>
+</body>
+</html>

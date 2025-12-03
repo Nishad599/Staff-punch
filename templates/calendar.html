@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar View - Punch Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { background: #e0f2fe; }
+        .nav-link.active { background: #0891b2; color: white; }
+        .calendar-day {
+            min-height: 100px;
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            background: #f0f9ff;
+        }
+        .day-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+        .day-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+        .day-overtime { border: 3px solid #f59e0b; }
+        .day-incomplete { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+        .day-today { ring: 3px; ring-color: #0891b2; box-shadow: 0 0 0 3px #0891b2; }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg">
+            <div class="p-6 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">⏱️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-gray-800">Punch System</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="/employees" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>👥</span> Employees
+                </a>
+                <a href="/register" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>➕</span> Register New
+                </a>
+                <a href="/calendar" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg font-medium">
+                    <span>📅</span> Calendar View
+                </a>
+                <a href="/reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📈</span> Reports
+                </a>
+                <a href="/monthly-report" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📋</span> Monthly Report
+                </a>
+                <a href="/punch" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📸</span> Punch Terminal
+                </a>
+                <hr class="my-4">
+                <a href="/" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>🏠</span> Home
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Calendar View</h1>
+                <p class="text-gray-500">Monthly attendance calendar for employees</p>
+            </div>
+
+            <!-- Employee & Month Selector -->
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Employee</label>
+                        <select id="emp-select" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none">
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Month</label>
+                        <input type="month" id="month-select" class="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="loadCalendar()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white p-3 rounded-lg font-semibold transition">
+                            📅 Load Calendar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="bg-white rounded-xl shadow p-4 mb-6">
+                <div class="flex flex-wrap gap-6 justify-center">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded day-present"></div>
+                        <span class="text-sm text-gray-600">Present (Full Day)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded day-present day-overtime"></div>
+                        <span class="text-sm text-gray-600">Present + Overtime</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded day-incomplete"></div>
+                        <span class="text-sm text-gray-600">Incomplete (Working)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded day-absent"></div>
+                        <span class="text-sm text-gray-600">Absent</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded bg-gray-100"></div>
+                        <span class="text-sm text-gray-600">Weekend/Holiday</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Summary -->
+            <div class="grid grid-cols-5 gap-4 mb-6" id="monthly-summary" style="display: none;">
+                <div class="bg-white p-4 rounded-xl shadow text-center">
+                    <p class="text-3xl font-bold text-gray-800" id="sum-total-days">0</p>
+                    <p class="text-sm text-gray-500">Working Days</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl shadow text-center">
+                    <p class="text-3xl font-bold text-green-600" id="sum-present">0</p>
+                    <p class="text-sm text-gray-500">Present</p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl shadow text-center">
+                    <p class="text-3xl font-bold text-red-600" id="sum-absent">0</p>
+                    <p class="text-sm text-gray-500">Absent</p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl shadow text-center">
+                    <p class="text-3xl font-bold text-blue-600" id="sum-total-hours">0h</p>
+                    <p class="text-sm text-gray-500">Total Hours</p>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl shadow text-center">
+                    <p class="text-3xl font-bold text-orange-600" id="sum-overtime">0h</p>
+                    <p class="text-sm text-gray-500">Overtime</p>
+                </div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="bg-white rounded-xl shadow overflow-hidden" id="calendar-container" style="display: none;">
+                <!-- Calendar Header -->
+                <div class="grid grid-cols-7 bg-gray-100">
+                    <div class="p-3 text-center font-semibold text-red-600">Sun</div>
+                    <div class="p-3 text-center font-semibold text-gray-700">Mon</div>
+                    <div class="p-3 text-center font-semibold text-gray-700">Tue</div>
+                    <div class="p-3 text-center font-semibold text-gray-700">Wed</div>
+                    <div class="p-3 text-center font-semibold text-gray-700">Thu</div>
+                    <div class="p-3 text-center font-semibold text-gray-700">Fri</div>
+                    <div class="p-3 text-center font-semibold text-red-600">Sat</div>
+                </div>
+                <!-- Calendar Days -->
+                <div class="grid grid-cols-7" id="calendar-grid">
+                    <!-- Days will be inserted here -->
+                </div>
+            </div>
+
+            <!-- No Employee Selected Message -->
+            <div class="bg-white rounded-xl shadow p-12 text-center" id="no-selection">
+                <div class="text-6xl mb-4">📅</div>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">Select an Employee</h3>
+                <p class="text-gray-500">Choose an employee and month to view their attendance calendar</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Day Detail Modal -->
+    <div id="day-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="modal-title">Day Details</h3>
+            <div id="modal-content">
+                <!-- Content inserted dynamically -->
+            </div>
+            <button onclick="closeModal()" class="mt-4 w-full py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let attendanceData = {};
+        let selectedEmpId = '';
+        let selectedMonth = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEmployees();
+            // Set current month
+            const now = new Date();
+            document.getElementById('month-select').value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        });
+
+        // Load employees
+        async function loadEmployees() {
+            try {
+                const response = await fetch('/api/employees');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('emp-select');
+                    data.employees.forEach(emp => {
+                        const option = document.createElement('option');
+                        option.value = emp.emp_id;
+                        option.textContent = `${emp.emp_name} (${emp.emp_id})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load employees:', error);
+            }
+        }
+
+        // Load calendar data
+        async function loadCalendar() {
+            selectedEmpId = document.getElementById('emp-select').value;
+            selectedMonth = document.getElementById('month-select').value;
+
+            if (!selectedEmpId || !selectedMonth) {
+                alert('Please select an employee and month');
+                return;
+            }
+
+            try {
+                // Get the month's start and end dates
+                const [year, month] = selectedMonth.split('-');
+                const startDate = `${selectedMonth}-01`;
+                const lastDay = new Date(year, month, 0).getDate();
+                const endDate = `${selectedMonth}-${lastDay}`;
+
+                const response = await fetch(`/api/attendance/report?start_date=${startDate}&end_date=${endDate}&emp_id=${selectedEmpId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Convert records to date-keyed object
+                    attendanceData = {};
+                    data.records.forEach(record => {
+                        attendanceData[record.punch_date] = record;
+                    });
+
+                    renderCalendar(year, month);
+                    updateSummary(data.records, year, month);
+                    
+                    document.getElementById('no-selection').style.display = 'none';
+                    document.getElementById('calendar-container').style.display = 'block';
+                    document.getElementById('monthly-summary').style.display = 'grid';
+                }
+            } catch (error) {
+                console.error('Failed to load calendar:', error);
+            }
+        }
+
+        // Render calendar
+        function renderCalendar(year, month) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay();
+
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            // Empty cells for days before the 1st
+            for (let i = 0; i < startDayOfWeek; i++) {
+                grid.innerHTML += `<div class="calendar-day p-2 border border-gray-100 bg-gray-50"></div>`;
+            }
+
+            // Days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const record = attendanceData[dateStr];
+                const dayOfWeek = new Date(year, month - 1, day).getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isToday = dateStr === todayStr;
+
+                let dayClass = 'calendar-day p-2 border border-gray-100 cursor-pointer';
+                let content = '';
+                let statusIcon = '';
+
+                if (isWeekend) {
+                    dayClass += ' bg-gray-50';
+                } else if (record) {
+                    if (record.status === 'completed') {
+                        dayClass += ' day-present';
+                        if (record.overtime_hours > 0) {
+                            dayClass += ' day-overtime';
+                        }
+                        statusIcon = '✅';
+                        content = `
+                            <div class="text-xs mt-1">
+                                <div class="font-semibold text-green-700">${record.total_hours}h</div>
+                                ${record.overtime_hours > 0 ? `<div class="text-orange-600">+${record.overtime_hours}h OT</div>` : ''}
+                            </div>
+                        `;
+                    } else if (record.status === 'punched_in') {
+                        dayClass += ' day-incomplete';
+                        statusIcon = '🟡';
+                        content = `<div class="text-xs mt-1 text-amber-700">Working...</div>`;
+                    }
+                } else if (new Date(dateStr) < today && !isWeekend) {
+                    dayClass += ' day-absent';
+                    statusIcon = '❌';
+                }
+
+                if (isToday) {
+                    dayClass += ' day-today';
+                }
+
+                grid.innerHTML += `
+                    <div class="${dayClass}" onclick="showDayDetail('${dateStr}')">
+                        <div class="flex justify-between items-start">
+                            <span class="font-semibold ${isWeekend ? 'text-red-400' : 'text-gray-700'}">${day}</span>
+                            <span class="text-sm">${statusIcon}</span>
+                        </div>
+                        ${content}
+                    </div>
+                `;
+            }
+
+            // Empty cells after the last day
+            const remainingCells = (7 - ((startDayOfWeek + daysInMonth) % 7)) % 7;
+            for (let i = 0; i < remainingCells; i++) {
+                grid.innerHTML += `<div class="calendar-day p-2 border border-gray-100 bg-gray-50"></div>`;
+            }
+        }
+
+        // Update summary stats
+        function updateSummary(records, year, month) {
+            const lastDay = new Date(year, month, 0).getDate();
+            let workingDays = 0;
+            
+            // Count working days (excluding weekends)
+            for (let day = 1; day <= lastDay; day++) {
+                const dayOfWeek = new Date(year, month - 1, day).getDay();
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    workingDays++;
+                }
+            }
+
+            const completedRecords = records.filter(r => r.status === 'completed');
+            const presentDays = completedRecords.length;
+            const totalHours = completedRecords.reduce((sum, r) => sum + (r.total_hours || 0), 0);
+            const overtime = completedRecords.reduce((sum, r) => sum + (r.overtime_hours || 0), 0);
+
+            // Only count absent for past working days
+            const today = new Date();
+            let absentDays = 0;
+            for (let day = 1; day <= lastDay; day++) {
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayOfWeek = new Date(year, month - 1, day).getDay();
+                const date = new Date(year, month - 1, day);
+                
+                if (dayOfWeek !== 0 && dayOfWeek !== 6 && date < today && !attendanceData[dateStr]) {
+                    absentDays++;
+                }
+            }
+
+            document.getElementById('sum-total-days').textContent = workingDays;
+            document.getElementById('sum-present').textContent = presentDays;
+            document.getElementById('sum-absent').textContent = absentDays;
+            document.getElementById('sum-total-hours').textContent = totalHours.toFixed(1) + 'h';
+            document.getElementById('sum-overtime').textContent = overtime.toFixed(1) + 'h';
+        }
+
+        // Show day detail modal
+        function showDayDetail(dateStr) {
+            const record = attendanceData[dateStr];
+            const modal = document.getElementById('day-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+
+            const date = new Date(dateStr);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+            title.textContent = formattedDate;
+
+            if (record) {
+                const punchIn = record.punch_in_time ? new Date(record.punch_in_time).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) : '-';
+                const punchOut = record.punch_out_time ? new Date(record.punch_out_time).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) : '-';
+
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Status</span>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${
+                                record.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                            }">
+                                ${record.status === 'completed' ? '✅ Completed' : '🟡 Working'}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-green-50 rounded-lg text-center">
+                                <div class="text-sm text-gray-600">Punch In</div>
+                                <div class="font-bold text-green-700">${punchIn}</div>
+                            </div>
+                            <div class="p-3 bg-orange-50 rounded-lg text-center">
+                                <div class="text-sm text-gray-600">Punch Out</div>
+                                <div class="font-bold text-orange-700">${punchOut}</div>
+                            </div>
+                        </div>
+                        ${record.status === 'completed' ? `
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="p-3 bg-blue-50 rounded-lg text-center">
+                                    <div class="text-sm text-gray-600">Total</div>
+                                    <div class="font-bold text-blue-700">${record.total_hours}h</div>
+                                </div>
+                                <div class="p-3 bg-cyan-50 rounded-lg text-center">
+                                    <div class="text-sm text-gray-600">Regular</div>
+                                    <div class="font-bold text-cyan-700">${record.regular_hours}h</div>
+                                </div>
+                                <div class="p-3 bg-amber-50 rounded-lg text-center">
+                                    <div class="text-sm text-gray-600">Overtime</div>
+                                    <div class="font-bold text-amber-700">${record.overtime_hours}h</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                const dayOfWeek = date.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                
+                content.innerHTML = `
+                    <div class="text-center py-6">
+                        <div class="text-5xl mb-4">${isWeekend ? '🏖️' : '❌'}</div>
+                        <p class="text-gray-600">${isWeekend ? 'Weekend - No attendance required' : 'No attendance record for this day'}</p>
+                    </div>
+                `;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('day-modal').classList.add('hidden');
+            document.getElementById('day-modal').classList.remove('flex');
+        }
+    </script>
+</body>
+</html>

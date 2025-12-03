@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employees - Punch Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { background: #e0f2fe; }
+        .nav-link.active { background: #0891b2; color: white; }
+        .emp-card { transition: all 0.3s ease; }
+        .emp-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-overlay { backdrop-filter: blur(4px); }
+        .input-field {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #0891b2;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            outline: none;
+        }
+        .badge-housekeeping { background: #dbeafe; color: #1e40af; }
+        .badge-security { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg">
+            <div class="p-6 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">⏱️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-gray-800">Punch System</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="/employees" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg font-medium">
+                    <span>👥</span> Employees
+                </a>
+                <a href="/register" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>➕</span> Register New
+                </a>
+                <a href="/calendar" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📅</span> Calendar View
+                </a>
+                <a href="/reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📈</span> Reports
+                </a>
+                <a href="/monthly-report" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📋</span> Monthly Report
+                </a>
+                <a href="/punch" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📸</span> Punch Terminal
+                </a>
+                <hr class="my-4">
+                <a href="/" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>🏠</span> Home
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Employees</h1>
+                    <p class="text-gray-500">Manage housekeeping & security staff</p>
+                </div>
+                <a href="/register" class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    ➕ Add New Employee
+                </a>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="bg-white rounded-xl shadow p-4 mb-6">
+                <div class="flex gap-4 flex-wrap">
+                    <input type="text" id="search-input" 
+                           class="flex-1 min-w-[200px] p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none"
+                           placeholder="Search by name or ID...">
+                    <select id="role-filter" class="p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none">
+                        <option value="">All Roles</option>
+                        <option value="housekeeping">🧹 Housekeeping</option>
+                        <option value="security">🛡️ Security</option>
+                    </select>
+                    <select id="designation-filter" class="p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none">
+                        <option value="">All Designations</option>
+                        <option value="High-skilled">High-skilled</option>
+                        <option value="Skilled">Skilled</option>
+                        <option value="Semi-skilled">Semi-skilled</option>
+                        <option value="Unskilled">Unskilled</option>
+                    </select>
+                    <select id="status-filter" class="p-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 outline-none">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Employee Stats -->
+            <div class="grid grid-cols-5 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">👥</span>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-gray-800" id="total-count">0</p>
+                            <p class="text-xs text-gray-500">Total</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">🧹</span>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-blue-600" id="housekeeping-count">0</p>
+                            <p class="text-xs text-gray-500">Housekeeping</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">🛡️</span>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-yellow-600" id="security-count">0</p>
+                            <p class="text-xs text-gray-500">Security</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">✅</span>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-green-600" id="active-count">0</p>
+                            <p class="text-xs text-gray-500">Active</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">😴</span>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-gray-500" id="inactive-count">0</p>
+                            <p class="text-xs text-gray-500">Inactive</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Grid -->
+            <div class="grid grid-cols-3 gap-6" id="employees-grid">
+                <p class="text-gray-500 col-span-3 text-center py-8">Loading employees...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black/50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">✏️ Edit Employee</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            
+            <form id="edit-form" class="space-y-4">
+                <input type="hidden" id="edit-emp-id">
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Employee ID</label>
+                    <input type="text" id="edit-emp-id-display" 
+                           class="input-field w-full p-3 rounded-lg bg-gray-100" disabled>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Employee Name</label>
+                    <input type="text" id="edit-emp-name" 
+                           class="input-field w-full p-3 rounded-lg" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" id="edit-emp-phone" 
+                           class="input-field w-full p-3 rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <select id="edit-emp-role" class="input-field w-full p-3 rounded-lg">
+                        <option value="housekeeping">🧹 Housekeeping (9 hrs/day)</option>
+                        <option value="security">🛡️ Security (8 hrs/day)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Designation</label>
+                    <select id="edit-emp-designation" class="input-field w-full p-3 rounded-lg">
+                        <option value="High-skilled">High-skilled</option>
+                        <option value="Skilled">Skilled</option>
+                        <option value="Semi-skilled">Semi-skilled</option>
+                        <option value="Unskilled">Unskilled</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select id="edit-emp-status" class="input-field w-full p-3 rounded-lg">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                
+                <div id="edit-result" class="hidden"></div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="flex-1 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition">
+                        💾 Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/50 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">⚠️ Confirm Delete</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete <span id="delete-emp-name" class="font-semibold text-red-600"></span>? This action cannot be undone.</p>
+            <div class="flex gap-4">
+                <button onclick="closeDeleteModal()" class="flex-1 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition">
+                    🗑️ Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allEmployees = [];
+        let deleteEmpId = null;
+
+        async function loadEmployees() {
+            try {
+                const response = await fetch('/api/employees');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allEmployees = data.employees;
+                    renderEmployees(allEmployees);
+                    updateCounts();
+                }
+            } catch (error) {
+                console.error('Failed to load employees:', error);
+                document.getElementById('employees-grid').innerHTML = 
+                    '<p class="text-red-500 col-span-3 text-center py-8">Failed to load employees</p>';
+            }
+        }
+
+        function getRoleBadge(role) {
+            if (role === 'security') {
+                return '<span class="badge-security px-2 py-1 text-xs rounded-full">🛡️ Security</span>';
+            }
+            return '<span class="badge-housekeeping px-2 py-1 text-xs rounded-full">🧹 Housekeeping</span>';
+        }
+
+        function getDesignationBadge(designation) {
+            const colors = {
+                'High-skilled': 'bg-purple-100 text-purple-700',
+                'Skilled': 'bg-blue-100 text-blue-700',
+                'Semi-skilled': 'bg-green-100 text-green-700',
+                'Unskilled': 'bg-gray-100 text-gray-600'
+            };
+            const colorClass = colors[designation] || colors['Unskilled'];
+            return `<span class="${colorClass} px-2 py-1 text-xs rounded-full">${designation || 'Unskilled'}</span>`;
+        }
+
+        function renderEmployees(employees) {
+            const grid = document.getElementById('employees-grid');
+            
+            if (employees.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-8">No employees found</p>';
+                return;
+            }
+
+            grid.innerHTML = employees.map(emp => `
+                <div class="emp-card bg-white rounded-xl shadow p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-14 h-14 ${emp.role === 'security' ? 'bg-gradient-to-br from-yellow-500 to-orange-600' : 'bg-gradient-to-br from-cyan-500 to-blue-600'} rounded-full flex items-center justify-center text-white text-xl font-bold">
+                            ${emp.emp_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="px-3 py-1 text-xs rounded-full ${
+                            emp.status === 'active' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-gray-100 text-gray-600'
+                        }">
+                            ${emp.status}
+                        </span>
+                    </div>
+                    
+                    <h3 class="font-bold text-gray-800 text-lg">${emp.emp_name}</h3>
+                    <p class="text-gray-500 text-sm mb-2">${emp.emp_id}</p>
+                    <p class="text-gray-500 text-sm mb-3">📞 ${emp.phone || 'N/A'}</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${getRoleBadge(emp.role)}
+                        ${getDesignationBadge(emp.designation)}
+                    </div>
+                    
+                    <div class="flex items-center justify-between pt-4 border-t">
+                        <span class="text-xs ${emp.face_registered ? 'text-green-600' : 'text-red-600'}">
+                            ${emp.face_registered ? '✅ Face Registered' : '❌ No Face'}
+                        </span>
+                        <div class="flex gap-2">
+                            <button onclick="showEditModal('${emp.emp_id}')" 
+                                    class="text-cyan-600 hover:text-cyan-800 text-sm font-medium px-2 py-1 rounded hover:bg-cyan-50 transition">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="showDeleteModal('${emp.emp_id}', '${emp.emp_name}')" 
+                                    class="text-red-500 hover:text-red-700 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCounts() {
+            const total = allEmployees.length;
+            const housekeeping = allEmployees.filter(e => e.role === 'housekeeping' || !e.role).length;
+            const security = allEmployees.filter(e => e.role === 'security').length;
+            const active = allEmployees.filter(e => e.status === 'active').length;
+            const inactive = total - active;
+            
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('housekeeping-count').textContent = housekeeping;
+            document.getElementById('security-count').textContent = security;
+            document.getElementById('active-count').textContent = active;
+            document.getElementById('inactive-count').textContent = inactive;
+        }
+
+        function filterEmployees() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const role = document.getElementById('role-filter').value;
+            const designation = document.getElementById('designation-filter').value;
+            const status = document.getElementById('status-filter').value;
+            
+            let filtered = allEmployees;
+            
+            if (search) {
+                filtered = filtered.filter(e => 
+                    e.emp_name.toLowerCase().includes(search) || 
+                    e.emp_id.toLowerCase().includes(search)
+                );
+            }
+            
+            if (role) {
+                filtered = filtered.filter(e => (e.role || 'housekeeping') === role);
+            }
+            
+            if (designation) {
+                filtered = filtered.filter(e => e.designation === designation);
+            }
+            
+            if (status) {
+                filtered = filtered.filter(e => e.status === status);
+            }
+            
+            renderEmployees(filtered);
+        }
+
+        // Edit Modal Functions
+        function showEditModal(empId) {
+            const emp = allEmployees.find(e => e.emp_id === empId);
+            if (!emp) return;
+            
+            document.getElementById('edit-emp-id').value = empId;
+            document.getElementById('edit-emp-id-display').value = empId;
+            document.getElementById('edit-emp-name').value = emp.emp_name;
+            document.getElementById('edit-emp-phone').value = emp.phone || '';
+            document.getElementById('edit-emp-role').value = emp.role || 'housekeeping';
+            document.getElementById('edit-emp-designation').value = emp.designation || 'Unskilled';
+            document.getElementById('edit-emp-status').value = emp.status;
+            document.getElementById('edit-result').classList.add('hidden');
+            
+            document.getElementById('edit-modal').classList.remove('hidden');
+            document.getElementById('edit-modal').classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.add('hidden');
+            document.getElementById('edit-modal').classList.remove('flex');
+        }
+
+        // Edit Form Submit
+        document.getElementById('edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const empId = document.getElementById('edit-emp-id').value;
+            const data = {
+                emp_name: document.getElementById('edit-emp-name').value.trim(),
+                phone: document.getElementById('edit-emp-phone').value.trim(),
+                role: document.getElementById('edit-emp-role').value,
+                designation: document.getElementById('edit-emp-designation').value,
+                status: document.getElementById('edit-emp-status').value
+            };
+            
+            const resultEl = document.getElementById('edit-result');
+            
+            try {
+                const response = await fetch(`/api/employee/${empId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultEl.innerHTML = `
+                        <div class="p-3 bg-green-100 border-l-4 border-green-500 rounded text-green-800">
+                            ✅ ${result.message}
+                        </div>
+                    `;
+                    resultEl.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        closeEditModal();
+                        loadEmployees();
+                    }, 1000);
+                } else {
+                    resultEl.innerHTML = `
+                        <div class="p-3 bg-red-100 border-l-4 border-red-500 rounded text-red-800">
+                            ❌ ${result.message}
+                        </div>
+                    `;
+                    resultEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `
+                    <div class="p-3 bg-red-100 border-l-4 border-red-500 rounded text-red-800">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+                resultEl.classList.remove('hidden');
+            }
+        });
+
+        // Delete Modal Functions
+        function showDeleteModal(empId, empName) {
+            deleteEmpId = empId;
+            document.getElementById('delete-emp-name').textContent = empName;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('delete-modal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            deleteEmpId = null;
+            document.getElementById('delete-modal').classList.add('hidden');
+            document.getElementById('delete-modal').classList.remove('flex');
+        }
+
+        async function confirmDelete() {
+            if (!deleteEmpId) return;
+            
+            try {
+                const response = await fetch(`/api/employee/${deleteEmpId}`, { method: 'DELETE' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeDeleteModal();
+                    loadEmployees();
+                } else {
+                    alert('Failed to delete: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', filterEmployees);
+        document.getElementById('role-filter').addEventListener('change', filterEmployees);
+        document.getElementById('designation-filter').addEventListener('change', filterEmployees);
+        document.getElementById('status-filter').addEventListener('change', filterEmployees);
+        
+        // Close modals on outside click
+        document.getElementById('edit-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('edit-modal')) closeEditModal();
+        });
+        
+        document.getElementById('delete-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('delete-modal')) closeDeleteModal();
+        });
+
+        // Initialize
+        loadEmployees();
+    </script>
+</body>
+</html>

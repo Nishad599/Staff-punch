@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Employee - Punch Attendance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { background: #e0f2fe; }
+        .nav-link.active { background: #0891b2; color: white; }
+        .input-field {
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #0891b2;
+            box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+            outline: none;
+        }
+        .btn-capture {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            transition: all 0.3s ease;
+        }
+        .btn-capture:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #10b981, #059669);
+            transition: all 0.3s ease;
+        }
+        .btn-register:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+        .btn-register:disabled, .btn-capture:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg">
+            <div class="p-6 border-b">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl">⏱️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-gray-800">Punch System</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📊</span> Dashboard
+                </a>
+                <a href="/employees" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>👥</span> Employees
+                </a>
+                <a href="/register" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-lg font-medium">
+                    <span>➕</span> Register New
+                </a>
+                <a href="/calendar" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📅</span> Calendar View
+                </a>
+                <a href="/reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📈</span> Reports
+                </a>
+                <a href="/monthly-report" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📋</span> Monthly Report
+                </a>
+                <a href="/punch" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>📸</span> Punch Terminal
+                </a>
+                <hr class="my-4">
+                <a href="/" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 font-medium">
+                    <span>🏠</span> Home
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Register New Employee</h1>
+                <p class="text-gray-500">Add a new staff member with face registration</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Registration Form -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">📝 Employee Details</h2>
+                    
+                    <form id="register-form" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Employee ID <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="emp-id" 
+                                       class="input-field w-full p-3 rounded-lg" 
+                                       placeholder="e.g., EMP001" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Phone Number <span class="text-red-500">*</span>
+                                </label>
+                                <input type="tel" id="emp-phone" 
+                                       class="input-field w-full p-3 rounded-lg" 
+                                       placeholder="Mobile number" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Employee Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="emp-name" 
+                                   class="input-field w-full p-3 rounded-lg" 
+                                   placeholder="Full name" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Role <span class="text-red-500">*</span>
+                                </label>
+                                <select id="emp-role" class="input-field w-full p-3 rounded-lg" required>
+                                    <option value="housekeeping">🧹 Housekeeping (9 hrs/day)</option>
+                                    <option value="security">🛡️ Security (8 hrs/day)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Designation <span class="text-red-500">*</span>
+                                </label>
+                                <select id="emp-designation" class="input-field w-full p-3 rounded-lg" required>
+                                    <option value="High-skilled">High-skilled</option>
+                                    <option value="Skilled">Skilled</option>
+                                    <option value="Semi-skilled">Semi-skilled</option>
+                                    <option value="Unskilled" selected>Unskilled</option>
+                                    <option value="ASG" selected>ASG</option>
+                                    <option value="SO" selected>SO</option>
+                                    <option value="Supervisor" selected>Supervisor</option>
+                                    <option value="Guard" selected>Guard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
+                            <strong>Working Hours:</strong><br>
+                            🧹 Housekeeping: Full Day = 9 hrs | Overtime after 9.5 hrs<br>
+                            🛡️ Security: Full Day = 8 hrs | Overtime after 8.5 hrs
+                        </div>
+
+                        <div class="pt-4 border-t">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Face Image <span class="text-red-500">*</span>
+                            </label>
+                            <div id="face-preview" class="w-full h-40 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+                                <span class="text-gray-400">No face captured</span>
+                            </div>
+                            <p id="face-status" class="text-sm text-gray-500 mb-3">Capture face from camera →</p>
+                        </div>
+
+                        <button type="submit" id="register-btn" disabled
+                                class="btn-register w-full text-white py-4 rounded-lg font-semibold text-lg">
+                            ✅ Register Employee
+                        </button>
+                    </form>
+
+                    <div id="register-result" class="mt-4"></div>
+                </div>
+
+                <!-- Camera Section -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">📸 Face Capture</h2>
+                    
+                    <div class="relative mb-4">
+                        <video id="video" autoplay playsinline 
+                               class="w-full rounded-lg bg-black"></video>
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        
+                        <!-- Face guide overlay -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-40 h-52 border-4 border-dashed border-cyan-400/50 rounded-full"></div>
+                        </div>
+                    </div>
+
+                    <div id="camera-status" class="text-center text-gray-500 mb-4">
+                        Initializing camera...
+                    </div>
+
+                    <button id="capture-btn" onclick="capturePhoto()" disabled
+                            class="btn-capture w-full text-white py-4 rounded-lg font-semibold text-lg">
+                        📷 Capture Face
+                    </button>
+
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <h3 class="font-semibold text-blue-800 mb-2">📋 Tips for Best Results</h3>
+                        <ul class="text-sm text-blue-700 space-y-1">
+                            <li>• Ensure good lighting on face</li>
+                            <li>• Look directly at the camera</li>
+                            <li>• Remove glasses if possible</li>
+                            <li>• Keep neutral expression</li>
+                            <li>• Position face within the circle</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let capturedImageData = null;
+        let cameraReady = false;
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    cameraReady = true;
+                    document.getElementById('camera-status').innerHTML = 
+                        '<span class="text-green-600">✅ Camera ready - Position face and capture</span>';
+                    document.getElementById('capture-btn').disabled = false;
+                };
+            } catch (err) {
+                console.error('Camera error:', err);
+                document.getElementById('camera-status').innerHTML = 
+                    '<span class="text-red-600">❌ Camera access denied</span>';
+            }
+        }
+
+        // Capture photo
+        function capturePhoto() {
+            if (!cameraReady) return;
+
+            ctx.drawImage(video, 0, 0);
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.9);
+
+            // Show preview
+            document.getElementById('face-preview').innerHTML = 
+                `<img src="${capturedImageData}" class="w-full h-full object-cover rounded-lg">`;
+            document.getElementById('face-status').innerHTML = 
+                '<span class="text-green-600">✅ Face captured successfully!</span>';
+            
+            // Enable register button
+            document.getElementById('register-btn').disabled = false;
+        }
+
+        // Handle registration
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!capturedImageData) {
+                alert('Please capture face image first!');
+                return;
+            }
+
+            const btn = document.getElementById('register-btn');
+            const resultEl = document.getElementById('register-result');
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Registering...';
+
+            const data = {
+                emp_id: document.getElementById('emp-id').value.trim(),
+                emp_name: document.getElementById('emp-name').value.trim(),
+                phone: document.getElementById('emp-phone').value.trim(),
+                role: document.getElementById('emp-role').value,
+                designation: document.getElementById('emp-designation').value,
+                face_image: capturedImageData
+            };
+
+            try {
+                const response = await fetch('/api/register-employee', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultEl.innerHTML = `
+                        <div class="p-4 bg-green-100 border-l-4 border-green-500 rounded">
+                            <p class="font-semibold text-green-800">✅ ${result.message}</p>
+                            <p class="text-sm text-green-700 mt-1">Employee ID: ${result.emp_id}</p>
+                        </div>
+                    `;
+                    
+                    // Reset form
+                    document.getElementById('register-form').reset();
+                    document.getElementById('face-preview').innerHTML = 
+                        '<span class="text-gray-400">No face captured</span>';
+                    document.getElementById('face-status').textContent = 'Capture face from camera →';
+                    capturedImageData = null;
+                    
+                } else {
+                    resultEl.innerHTML = `
+                        <div class="p-4 bg-red-100 border-l-4 border-red-500 rounded">
+                            <p class="font-semibold text-red-800">❌ ${result.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `
+                    <div class="p-4 bg-red-100 border-l-4 border-red-500 rounded">
+                        <p class="font-semibold text-red-800">❌ Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+
+            btn.disabled = !capturedImageData;
+            btn.innerHTML = '✅ Register Employee';
+        });
+
+        // Initialize
+        initCamera();
+    </script>
+</body>
+</html>

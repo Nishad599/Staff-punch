@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+ENV/
+env/
+
+# Databases
+*.db
+
+# Logs
+*.log
+logs/
+server.log
+
+# Certificates / Keys
+*.pem
+
+# Face encodings & images
+face_encodings/
+employee_photos/
+
+# Cache
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Compiled stuff
+*.pyo
+*.pyd
+
+# Jupyter checkpoints
+.ipynb_checkpoints
